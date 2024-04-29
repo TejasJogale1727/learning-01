@@ -50,19 +50,25 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
 			logger.info("Ensuring Request Security: Managing Request Authentication in the API Gateway Application");
 			if (validator.isSecured.test(exchange.getRequest())) {
 				// header contains token or not
+				String errorMsgResponseBody = null;
 				if (!exchange.getRequest().getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
-					ServerHttpResponse response = exchange.getResponse();
-                	response.setStatusCode(HttpStatus.BAD_REQUEST);
-                    String newResponseBody = "Missing authorization header";
-                    DataBuffer dataBuffer = response.bufferFactory().wrap(newResponseBody.getBytes(StandardCharsets.UTF_8));
-                    response.getHeaders().setContentLength(newResponseBody.length());
-                    response.writeWith(Mono.just(dataBuffer)).subscribe();
-                	exchange.mutate().response(response).build();
-                	logger.error("Missing authorization header in request !!!");
-                    return response.setComplete();
-//                    throw new RuntimeException("missing authorization header");
+					errorMsgResponseBody = "Missing authorization header in request.";
+				} else if (exchange.getRequest().getHeaders().get(HttpHeaders.AUTHORIZATION).get(0).isEmpty() || exchange.getRequest().getHeaders().get(HttpHeaders.AUTHORIZATION).get(0) == null) {
+					errorMsgResponseBody = "Authorization header is empty in request.";
 				}
 
+				if (errorMsgResponseBody != null) {
+					ServerHttpResponse response = exchange.getResponse();
+					response.setStatusCode(HttpStatus.BAD_REQUEST);
+					DataBuffer dataBuffer = response.bufferFactory().wrap(errorMsgResponseBody.getBytes(StandardCharsets.UTF_8));
+					response.getHeaders().setContentLength(errorMsgResponseBody.length());
+					response.writeWith(Mono.just(dataBuffer)).subscribe();
+					exchange.mutate().response(response).build();
+					logger.error(errorMsgResponseBody);
+					return response.setComplete();
+//                    throw new RuntimeException("missing authorization header");
+				}
+				
 				String authHeader = exchange.getRequest().getHeaders().get(HttpHeaders.AUTHORIZATION).get(0);
 				if (authHeader != null && authHeader.startsWith("Bearer ")) {
 					authHeader = authHeader.substring(7);
@@ -92,7 +98,7 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
 		                    	if (!response) {
 		                    		throw new RuntimeException("un authorized access to application");
 								}
-		                    	logger.info("User authenticated successfully !!!, Forwarding request : "+exchange.getRequest().getURI().getHost()+" to respective service application.");
+		                    	logger.info("User authenticated successfully !!!, Forwarding request : "+exchange.getRequest().getURI()+" to respective service application.");
 		                        return chain.filter(exchange);
 		                    })
 		                    .onErrorResume(throwable -> {
