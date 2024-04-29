@@ -14,8 +14,8 @@ import io.jsonwebtoken.SignatureAlgorithm;
 
 @Component
 public class JWTUtil {
-	//requirement :
-    public static final long JWT_TOKEN_VALIDITY = 5 * 60 * 60;
+	//Expiration Time validations as 24 Hours Formula is [Hour_we_want*60(minute)*60(second)*1000(millisecond)]
+    public static final long JWT_TOKEN_VALIDITY = 24 * 60 * 60 * 1000;
 
     //    public static final long JWT_TOKEN_VALIDITY =  60; //Change as per production application
     private String secret = "afafasfafafasfasfasfafacasdasfasxASFACASDFACASDFASFASFDAFASFASDAADSCSDFADCVSGCFVADXCcadwavfsfarvf";
@@ -60,7 +60,7 @@ public class JWTUtil {
     private String doGenerateToken(Map<String, Object> claims, String subject) {
 
         return Jwts.builder().setClaims(claims).setSubject(subject).setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + JWT_TOKEN_VALIDITY * 1000))
+                .setExpiration(new Date(System.currentTimeMillis() + JWT_TOKEN_VALIDITY))
                 .signWith(SignatureAlgorithm.HS512, secret).compact();
     }
 
