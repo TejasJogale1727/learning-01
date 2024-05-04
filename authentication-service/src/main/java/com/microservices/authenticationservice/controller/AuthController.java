@@ -95,6 +95,7 @@ public class AuthController {
 		logger.info("User "+userDetails.getUsername()+" has beeen authenticated.");
 		JWTResponse response = new JWTResponse(token, userDetails.getUsername());
 		msg.setStatusCode(HttpStatus.OK);
+		msg.setMessage("Login successfull.");
 		msg.setData(response);
 		return new ResponseEntity<>(msg, HttpStatus.OK);
 	}
